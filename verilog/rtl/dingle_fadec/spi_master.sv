@@ -26,6 +26,7 @@
     //memory variables
         logic [11:0] shift_reg_d, shift_reg_q;         //12 bits for the ADC data
         logic [4:0]  bit_counter_d, bit_counter_q;     //To count bits 
+
         
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -45,6 +46,25 @@
         shift_reg_d   = shift_reg_q;
         bit_counter_d = bit_counter_q;
         
+        //clock divider memory
+        logic [3:0] clk_div_d, clk_div_q; // A 4-bit counter (counts 0 to 15)
+        logic       spi_clk_d, spi_clk_q; // The actual slow clock signal        
+        
+        //Clock divider
+        //run clock only when the fsm is busy 
+        if(state_q != IDLE) begin
+                clk_div_d = clk_div_q + 1'b1;
+                
+                if(clk_div_q == 4'd5) begin
+                        clk_div_d = 4'b0;
+                        spi_clk_d = ~spi_clk_q;
+                end
+        end else begin 
+            clk_div_d = 4'b0;
+            spi_clk_d = 1'b0; 
+        end
+
+            
         // 2. Default Output Assignments
         spi_cs_n_o = 1'b1;  // High = Chip Select Inactive
         spi_sclk_o = 1'b0;  // Clock starts low
@@ -54,19 +74,61 @@
 
         // 3. The State Machine
         case (state_q)
-            IDLE: begin
-                if (start_i) begin
-                    state_d = SEND_CMD;
-                    bit_counter_d = 5'b0;
-                    
-                    // MCP3208 Command: Start bit (1), Single-ended (1), plus the 3-bit channel
-                    // We load it into the top of our shift register
-                    shift_reg_d = {2'b11, channel_i, 7'b0}; 
+                IDLE: begin
+                        if (start_i) begin
+                            state_d = SEND_CMD;
+                            bit_counter_d = 5'b0;
+                            
+                            // MCP3208 Command: Start bit (1), Single-ended (1), plus the 3-bit channel
+                            // We load it into the top of our shift register
+                            shift_reg_d = {2'b11, channel_i, 7'b0}; 
+                        end    
                 end
-            end
-            
-            // ... (We will write SEND_CMD and READ_DATA next!)
-            
+
+                SEND_CMD: begin
+                        spi_cs_n_o = 1'b0;   //wake up the machine
+                        spi_mosi_o = shift_reg_q[11];  //output top bit of shift register to ADC
+                        shift_reg_d = {shift_reg_q[10:0], 1'b0};  //shift register left by 1
+
+                        if (bit_counter_q == 5'd4) begin
+                                state_d = SAMPLE;
+                                bit_counter_d = 5'b0; //reset for reading phase
+                        end else begin
+                                bit_counter_d = bit_counter_q + 1'b1;
+                        end
+                end
+
+
+                SAMPLE: begin
+                        spi_cs_n_o = 1'b0; // Keep ADC awake
+                        // The ADC needs 1 or 2 clock cycles to physically sample the voltage.
+                        // We just wait here for 1 cycle and then move to reading.
+                        state_d = READ_DATA;
+                        bit_counter_d = 5'b0;
+                end
+
+                READ_DATA: begin
+                        spi_cs_n_o = 1'b0;  //keep ADC awake
+                        //reads incoming bit from ADC and shifts into botom register
+                        shift_reg_d = {shift_reg_q[10:0], spi_miso_i};
+                        //count for 12 bits
+
+                        if (bit_counter_q == 5'd11) begin
+                                state_d = DONE;
+                        end else begin
+                                bit_counter_d = bit_counter_q + 1'b1;
+                        end
+                end
+
+                DONE: begin
+                        spi_cs_n_o = 1'b1;        //pull high to turn of ADC 
+                        valid_o = 1'b1;           //Tell FGPA new reading
+                        data_o = shift_reg_q;     //output matched 12 bit number
+
+                        state_d = IDLE;           // Go back to sleep till next trigger
+                end
+                
+                        
             default: state_d = IDLE;
         endcase
     end    
