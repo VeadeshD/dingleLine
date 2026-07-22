@@ -1,7 +1,7 @@
 `default_nettype none
-// Empty top module
+// Empty top module (do not modify the ports)
 
-module top (
+module fpga_top (
   // I/O ports
   input  logic hz100, reset,
   input  logic [20:0] pb,
@@ -15,7 +15,7 @@ module top (
   output logic txclk, rxclk,
   input  logic txready, rxready
 );
+  // Your code goes here...
+  top #() top_inst(.clk(pb[1]), .nrst(pb[0]), .out(green));
 
-  
-  
 endmodule

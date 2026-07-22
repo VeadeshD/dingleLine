@@ -1,2 +1,6 @@
 openlane/*/runs
 pdks
+*.log
+verilog/build/
+*.vcd
+*.gtkw
