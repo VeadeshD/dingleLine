@@ -9,7 +9,7 @@
 - `[x]` Write Documentation
   - `[x]` Create `docs/ROADMAP.md` with the 3-phase implementation plan
   - `[x]` Populate `docs/dingle_fadec/info.md` with project specifications
-- `[/]` Phase 1: The Hardware Data Pipeline
+- `[x]` Phase 1: The Hardware Data Pipeline
   - `[x]` Write `spi_master.sv` FSM, Shift Register, and Clock Divider logic
   - `[x]` Write `moving_avg_filter.sv`
-  - `[ ]` Integrate and verify in a testbench
+  - `[x]` Integrate and verify in a testbench
