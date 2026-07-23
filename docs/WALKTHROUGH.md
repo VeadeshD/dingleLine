@@ -10,6 +10,19 @@ I built this module adhering to aerospace-grade, deterministic SystemVerilog sta
 - **`always_ff`**: Manages my strict clock synchronization, ensuring all memory registers (State, Shift Register, Counters) update simultaneously on the rising edge of the system clock. It also enforces a hardware-level safety reset (`rst_n`) to force my thruster monitoring into an `IDLE` state upon boot.
 - **`always_comb`**: Houses my decision logic and the Finite State Machine (FSM), evaluating the next state instantly without clock latency.
 
+**Finite State Machine (FSM) Diagram:**
+```mermaid
+stateDiagram-v2
+    [*] --> IDLE : rst_n (Reset)
+    IDLE --> SEND_CMD : start_i
+    SEND_CMD --> SEND_CMD : Shift Command Bits
+    SEND_CMD --> SAMPLE : bit_counter == 4
+    SAMPLE --> READ_DATA : 1.5 Cycle Delay
+    READ_DATA --> READ_DATA : Shift Incoming Data
+    READ_DATA --> DONE : bit_counter == 11
+    DONE --> IDLE : valid_o = 1
+```
+
 ### 2. Custom Clock Divider
 Because my iCE40 FPGA system clock operates significantly faster (e.g., 12+ MHz) than the maximum allowable SPI clock for the ADC (~1-2 MHz), I had to slow it down:
 - I implemented a **Clock Divider** (`clk_div_q`) that mathematically down-samples the system clock.
@@ -31,6 +44,46 @@ To ensure my FADEC safety logic does not trigger false engine shutdowns due to t
 - **The Rolling Buffer**: The module maintains an array of eight 12-bit registers (`buffer_q[0:7]`), acting as a short-term memory bank for the last 8 telemetry snapshots from the ADC.
 - **The Running Sum**: Rather than looping through the array to recalculate the total on every clock cycle, I implemented a running sum (`sum_q`). When a new reading arrives, the logic simply subtracts the oldest reading (`buffer_q[7]`) and adds the new reading (`data_i`), keeping the sum perfectly accurate.
 - **Zero-Latency Division**: Because division logic is highly inefficient in silicon, I sized my array to exactly $2^3$ (8) samples. To calculate the final average, I physically wired the top 12 bits of the 15-bit sum directly to the output pins (`data_o = sum_q[14:3]`). This effectively bit-shifts the sum to the right by 3, perfectly dividing the total by 8 in a single, combinational clock cycle!
+
+## Top-Level Hardware Integration
+The pipeline is fully instantiated inside a top-level wrapper (`sensor_pipeline.sv`). This module routes external I/O directly into the internal architecture, seamlessly piping the raw 12-bit telemetry from the SPI Master into the Moving Average Filter without utilizing external registers.
+
+**RTL Block Diagram:**
+```mermaid
+flowchart LR
+    subgraph ADC["MCP3208 ADC (External)"]
+        direction TB
+        MISO
+        MOSI
+        SCLK
+        CS
+    end
+
+    subgraph FPGA["iCE40 FPGA (sensor_pipeline.sv)"]
+        direction LR
+        subgraph SPI["spi_master.sv"]
+            FSM["Two-Block FSM"]
+            CDiv["Clock Divider"]
+            SReg["12-bit Shift Reg"]
+        end
+        
+        subgraph MAF["moving_avg_filter.sv"]
+            Buffer["8x12-bit Buffer"]
+            Sum["15-bit Running Sum"]
+            Div["Bit-Shift Divide (>>3)"]
+        end
+        
+        SPI -- "raw_valid_w\nraw_data_w[11:0]" --> MAF
+    end
+
+    ADC -- "spi_miso_i" --> SPI
+    SPI -- "spi_mosi_o" --> ADC
+    SPI -- "spi_sclk_o" --> ADC
+    SPI -- "spi_cs_n_o" --> ADC
+    
+    MAF -- "valid_o" --> FADEC[("To Phase 2 Safety Logic")]
+    MAF -- "data_o[11:0]" --> FADEC
+```
 
 ## Next Steps
 With both the `spi_master.sv` and `moving_avg_filter.sv` core modules written, the final step in Phase 1 is **Integration and Verification**. I will need to construct a Top-Level pipeline module (`sensor_pipeline.sv`) to physically wire the SPI Master's outputs into the Filter's inputs, and then write a testbench to simulate the hardware.
