@@ -1,18 +1,18 @@
-module tb_sensor_pipline();
+module tb_sensor_pipeline();
 
-  logic  clk,
-  logic  rst_n,
-  logic start_i,
-  logic [2:0] channel_i,
-  logic spi_miso_i,
-  logic spi_sclk_o,
-  logic spi_cs_n_o
-  logic spi_mosi_o,
-  logic valid_o,
-  logic [11:0] data_o
+  logic  clk;
+  logic  rst_n;
+  logic start_i;
+  logic [2:0] channel_i;
+  logic spi_miso_i;
+  logic spi_sclk_o;
+  logic spi_cs_n_0;
+  logic spi_mosi_o;
+  logic valid_o;
+  logic [11:0] data_o;
 
   //DUT
-  sensor_pipline DUT (
+  sensor_pipeline DUT (
     .clk        (clk),
     .rst_n      (rst_n),
     .start_i    (start_i),
