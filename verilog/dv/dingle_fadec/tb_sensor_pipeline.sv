@@ -43,8 +43,8 @@ module tb_sensor_pipeline();
     //initial state
     rst_n = 1'b0;
     start_i = 1'b0;
-    channel_i = 3b'011; //random chanel
-    spi_miso_i = 1'b0  //keep miso silent for now
+    channel_i = 3'b011; //random chanel
+    spi_miso_i = 1'b0;  //keep miso silent for now
     #100;
     
     //let go of reset
