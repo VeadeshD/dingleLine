@@ -6,7 +6,7 @@ module tb_sensor_pipeline();
   logic [2:0] channel_i;
   logic spi_miso_i;
   logic spi_sclk_o;
-  logic spi_cs_n_0;
+  logic spi_cs_n_o;
   logic spi_mosi_o;
   logic valid_o;
   logic [11:0] data_o;
