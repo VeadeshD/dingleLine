@@ -89,12 +89,13 @@
                         spi_cs_n_o = 1'b0;   //wake up the machine
                         spi_mosi_o = shift_reg_q[11];  //output top bit of shift register to ADC
                         shift_reg_d = {shift_reg_q[10:0], 1'b0};  //shift register left by 1
-
-                        if (bit_counter_q == 5'd4) begin
-                                state_d = SAMPLE;
-                                bit_counter_d = 5'b0; //reset for reading phase
-                        end else begin
-                                bit_counter_d = bit_counter_q + 1'b1;
+                        if(clock_div_q == 4'd5) begin
+                                if (bit_counter_q == 5'd4) begin
+                                        state_d = SAMPLE;
+                                        bit_counter_d = 5'b0; //reset for reading phase
+                                end else begin
+                                        bit_counter_d = bit_counter_q + 1'b1;
+                                end
                         end
                 end
 
@@ -112,11 +113,12 @@
                         //reads incoming bit from ADC and shifts into botom register
                         shift_reg_d = {shift_reg_q[10:0], spi_miso_i};
                         //count for 12 bits
-
-                        if (bit_counter_q == 5'd11) begin
-                                state_d = DONE;
-                        end else begin
-                                bit_counter_d = bit_counter_q + 1'b1;
+                        if(clk_div_q == 4'd5) begin
+                                if (bit_counter_q == 5'd11) begin
+                                        state_d = DONE;
+                                end else begin
+                                        bit_counter_d = bit_counter_q + 1'b1;
+                                end
                         end
                 end
 
