@@ -26,17 +26,22 @@
     //memory variables
         logic [11:0] shift_reg_d, shift_reg_q;         //12 bits for the ADC data
         logic [4:0]  bit_counter_d, bit_counter_q;     //To count bits 
-
+        logic [3:0] clk_div_d, clk_div_q; // A 4-bit counter (counts 0 to 15)
+        logic       spi_clk_d, spi_clk_q; // The actual slow clock signal     
         
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state_q        <= IDLE; // If reset is pulled, go to IDLE
             shift_reg_q    <= 12'b0;
             bit_counter_q  <= 5'b0;
+            clk_div_q      <= 4'b0;
+            spi_clk_q      <= 1'b0;
         end else begin
             state_q        <= state_d; // Otherwise, update to the next state
             shift_reg_q    <= shift_reg_d;
-            bit_counter_q  <= bit_counter_d; 
+            bit_counter_q  <= bit_counter_d;
+            clk_div_q <= clk_div_d;
+            spi_clk_q <= spi_clk_d;
         end
     end
 
@@ -45,10 +50,12 @@
         state_d       = state_q;
         shift_reg_d   = shift_reg_q;
         bit_counter_d = bit_counter_q;
+        spi_sclk_o = spi_clk_q;
+        clk_div_d = clk_div_q;
+        spi_clk_d = spi_clk_q;
         
         //clock divider memory
-        logic [3:0] clk_div_d, clk_div_q; // A 4-bit counter (counts 0 to 15)
-        logic       spi_clk_d, spi_clk_q; // The actual slow clock signal        
+   
         
         //Clock divider
         //run clock only when the fsm is busy 
@@ -61,13 +68,12 @@
                 end
         end else begin 
             clk_div_d = 4'b0;
-            spi_clk_d = 1'b0; 
+            spi_clk_d = 1'b0;     
         end
 
             
         // 2. Default Output Assignments
         spi_cs_n_o = 1'b1;  // High = Chip Select Inactive
-        spi_sclk_o = 1'b0;  // Clock starts low
         spi_mosi_o = 1'b0;
         valid_o    = 1'b0;
         data_o     = 12'b0;
@@ -88,8 +94,9 @@
                 SEND_CMD: begin
                         spi_cs_n_o = 1'b0;   //wake up the machine
                         spi_mosi_o = shift_reg_q[11];  //output top bit of shift register to ADC
-                        shift_reg_d = {shift_reg_q[10:0], 1'b0};  //shift register left by 1
-                        if(clock_div_q == 4'd5) begin
+ 
+                        if(clk_div_q == 4'd5) begin
+                                shift_reg_d = {shift_reg_q[10:0], 1'b0};  //shift register left by 1                                
                                 if (bit_counter_q == 5'd4) begin
                                         state_d = SAMPLE;
                                         bit_counter_d = 5'b0; //reset for reading phase
@@ -111,9 +118,10 @@
                 READ_DATA: begin
                         spi_cs_n_o = 1'b0;  //keep ADC awake
                         //reads incoming bit from ADC and shifts into botom register
-                        shift_reg_d = {shift_reg_q[10:0], spi_miso_i};
+
                         //count for 12 bits
                         if(clk_div_q == 4'd5) begin
+                                shift_reg_d = {shift_reg_q[10:0], spi_miso_i};
                                 if (bit_counter_q == 5'd11) begin
                                         state_d = DONE;
                                 end else begin
