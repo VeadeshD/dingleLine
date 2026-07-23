@@ -85,5 +85,12 @@ flowchart LR
     MAF -- "data_o[11:0]" --> FADEC
 ```
 
-## Next Steps
-With both the `spi_master.sv` and `moving_avg_filter.sv` core modules written, the final step in Phase 1 is **Integration and Verification**. I will need to construct a Top-Level pipeline module (`sensor_pipeline.sv`) to physically wire the SPI Master's outputs into the Filter's inputs, and then write a testbench to simulate the hardware.
+## Simulation and Verification
+To prove the physical logic prior to synthesis, I wrote a comprehensive testbench (`tb_sensor_pipeline.sv`) simulating a 12 MHz FPGA clock environment. Using **EDA Playground** and the **EPWave** visualization tool, I successfully verified:
+- The clock divider down-sampling the 12 MHz system clock into a clean, stable SPI clock.
+- The `start_i` signal triggering the FSM to immediately pull `spi_cs_n_o` low.
+- The dummy 1.5 cycle delay in the `SAMPLE` state successfully shifting into `READ_DATA`.
+- The Moving Average Filter correctly dividing the sampled dummy values.
+
+## Next Steps: Phase 2
+With the Hardware Data Pipeline complete and verified, I am now proceeding to **Phase 2: Propulsion Control Laws**. The `valid_o` and `data_o` telemetry streams from the filter will be fed into a new safety module. This module will evaluate the telemetry against hard-coded temperature/current limits to independently trigger ion thruster shutdown valves in the event of an anomaly.
