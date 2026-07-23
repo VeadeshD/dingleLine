@@ -1,0 +1,15 @@
+- `[x]` Set up GitHub Repository and Cleanup
+  - `[x]` Delete Battleship leftover `shipPlacement.sv`
+  - `[x]` Delete old logs (`top.log`, `vvp_sim.log`)
+  - `[x]` Delete old RTL (`verilog/rtl/reset.sv`, `verilog/rtl/top.sv`)
+  - `[x]` Update `.gitignore` to exclude logs and build artifacts
+- `[x]` Scaffold new FADEC project
+  - `[x]` Execute `make setup_dingle_fadec`
+  - `[x]` Update `PROJECT` variable in `Makefile`
+- `[x]` Write Documentation
+  - `[x]` Create `docs/ROADMAP.md` with the 3-phase implementation plan
+  - `[x]` Populate `docs/dingle_fadec/info.md` with project specifications
+- `[/]` Phase 1: The Hardware Data Pipeline
+  - `[x]` Write `spi_master.sv` FSM, Shift Register, and Clock Divider logic
+  - `[x]` Write `moving_avg_filter.sv`
+  - `[ ]` Integrate and verify in a testbench
