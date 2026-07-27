@@ -23,3 +23,6 @@ To compile and simulate the pipeline:
 iverilog -g2012 -o pipeline_sim verilog/rtl/dingle_fadec/spi_master.sv verilog/rtl/dingle_fadec/avg_filter.sv verilog/rtl/dingle_fadec/sensor_pipeline.sv verilog/dv/dingle_fadec/tb_sensor_pipeline.sv
 vvp pipeline_sim
 ```
+
+## Methodology & Acknowledgments
+**Note on AI Usage:** The core system architecture, physical bounds, state machine thresholds, and hardware integration strategy for this FADEC project were manually engineered. LLM AI tools were utilized to accelerate SystemVerilog syntax generation and format documentation strictly to IEEE academic standards.
