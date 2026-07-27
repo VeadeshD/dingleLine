@@ -13,3 +13,8 @@
   - `[x]` Write `spi_master.sv` FSM, Shift Register, and Clock Divider logic
   - `[x]` Write `moving_avg_filter.sv`
   - `[x]` Integrate and verify in a testbench
+- `[x]` Phase 2: Propulsion Control Laws
+  - `[x]` Scaffold `control_laws.sv` and define the Safety FSM
+  - `[x]` Implement the 8-bit PWM Valve Controller
+  - `[x]` Integrate `control_laws.sv` into `sensor_pipeline.sv` top-level
+  - `[x]` Write `tb_control_laws.sv` and verify the emergency shutdown in EDA Playground

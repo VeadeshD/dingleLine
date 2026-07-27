@@ -12,12 +12,12 @@ This document outlines my high-level timeline and milestones for the design, ver
 - [x] Verify my logic via Testbench and EPWave/GTKWave simulation
 
 ## Milestone 2: Propulsion Control Laws
-**Status:** In Progress (Next)
+**Status:** Completed
 **Goal:** Implement my safety logic and PID control to regulate thruster flow valves based on my filtered telemetry.
-- [ ] Define my engine operating bounds (Max voltage, over-current thresholds)
-- [ ] Implement my State Machine for Startup, Steady-State, and Emergency Shutdown
-- [ ] Design my PWM (Pulse Width Modulation) generation for valve control
-- [ ] Verify my Control Laws via simulation
+- [x] Define my engine operating bounds (Max voltage, over-current thresholds)
+- [x] Implement my State Machine for Startup, Steady-State, and Emergency Shutdown
+- [x] Design my PWM (Pulse Width Modulation) generation for valve control
+- [x] Verify my Control Laws via simulation
 
 ## Milestone 3: Open-Source Silicon Integration
 **Status:** Pending
