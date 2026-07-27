@@ -15,7 +15,26 @@ module fpga_top (
   output logic txclk, rxclk,
   input  logic txready, rxready
 );
-  // Your code goes here...
-  top #() top_inst(.clk(pb[1]), .nrst(pb[0]), .out(green));
+  sensor_pipeline my_pipe_inst(
+    //inputs
+    .clk        (hz100),
+    .rst_n      (pb[0]),
+    .start_i    (pb[1]),
+    .channel_i  (3'b000),
+    .spi_miso_i (1'b0),
 
+    //outputs
+    .valve_pwm_o     (green),  // Connect to the green LED
+    .alarm_o         (red),  // Connect to the red LED
+    .shutdown_flag_o (blue),  // Connect to the blue LED.
+
+    //unused outputs
+    .spi_sclk_o      (),
+    .spi_cs_n_o      (),
+    .spi_mosi_o      (),
+    .valid_o         (),
+    .data_o          ()
+  );
+  
+    
 endmodule
