@@ -92,5 +92,24 @@ To prove the physical logic prior to synthesis, I wrote a comprehensive testbenc
 - The dummy 1.5 cycle delay in the `SAMPLE` state successfully shifting into `READ_DATA`.
 - The Moving Average Filter correctly dividing the sampled dummy values.
 
-## Next Steps: Phase 2
-With the Hardware Data Pipeline complete and verified, I am now proceeding to **Phase 2: Propulsion Control Laws**. The `valid_o` and `data_o` telemetry streams from the filter will be fed into a new safety module. This module will evaluate the telemetry against hard-coded temperature/current limits to independently trigger ion thruster shutdown valves in the event of an anomaly.
+# Phase 2 Progress: Propulsion Control Laws
+
+## Overview
+With the telemetry successfully acquired and filtered in Phase 1, I have engineered the central decision-making brain of the FADEC: The **Propulsion Control Laws** (`control_laws.sv`). This module evaluates the clean, 12-bit telemetry stream against hard-coded safety redlines to dynamically control the ion thruster valves and trigger hardware-level emergency shutdowns.
+
+## Architectural Highlights
+
+### 1. The Safety FSM
+I designed a 3-state Finite State Machine to govern the engine's lifecycle safely:
+- **`STARTUP`**: The default boot state. The FADEC holds all valves closed and waits for the very first valid telemetry reading (`valid_i == 1`) to ensure it does not act on garbage data during power-up.
+- **`STEADY_STATE`**: The active flight mode. The module actively compares the incoming telemetry against the critical Redline threshold (`12'd3500`).
+- **`EMERGENCY_SHUTDOWN`**: A terminal safety state. If the telemetry exceeds the Redline, the FSM permanently locks into this state, slams the fuel valves shut, and asserts the `alarm_o` pin. The only way to exit this state is a physical hardware reset.
+
+### 2. Hardware PWM (Pulse Width Modulation) Controller
+To proportionally control the analog Xenon gas flow valves using strictly digital (0V or 3.3V) FPGA pins, I engineered a hardware PWM generator.
+- **The Heartbeat**: I built an 8-bit counter (`pwm_counter_q`) that increments by 1 on every single tick of the 12 MHz system clock. It continuously counts from 0 to 255 and overflows back to 0.
+- **The Duty Cycle**: During `STEADY_STATE`, a combinational comparator constantly evaluates this counter (`if (pwm_counter_q < 8'd128)`). Because 128 is exactly half of 256, this logic asserts the `valve_pwm_o` pin HIGH for exactly 50% of the cycle, and LOW for the other 50%.
+- **The Result**: The rapid 12 MHz pulsing provides an exact 50% duty cycle, effectively holding the mechanical valve exactly halfway open.
+
+## Next Steps
+Now that both the Sensor Pipeline (Phase 1) and the Control Laws (Phase 2) are complete, the final step is **Top-Level Integration**. I will wire the `control_laws.sv` module inside the `sensor_pipeline.sv` wrapper, connecting the telemetry output of the Moving Average Filter directly into the input of the Control Laws. Finally, I will write a testbench to simulate a catastrophic engine failure and prove the FSM triggers the emergency shutdown.
