@@ -15,7 +15,10 @@ module sensor_pipeline (
 
   //FADEC Outputs
   output logic valid_o,
-  output logic [11:0] data_o
+  output logic [11:0] data_o,
+  output logic valve_pwn_o,
+  output logic alarm_o,
+  output logic shutdown_flag_o
 );
   
   //wire to carry data from Master to Filter
@@ -50,6 +53,16 @@ module sensor_pipeline (
     .valid_o    (valid_o),
     .data_o     (data_o)    
   );
+
+  control_laws brain_inst (
+    .clk              (clk),
+    .rst_n            (rst_n),
+    .valid_i          (valid_o),
+    .data_i           (data_o),
+    .valve_pwm_o      (valve_pwm_o),
+    .alarm_o          (alarm_o),
+    .shutdown_flag_o  (shutdown_flag_o)
+  );    
   
 endmodule
   
