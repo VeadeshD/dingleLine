@@ -12,8 +12,8 @@ export PDK_ROOT      ?= $(VOLARE_ROOT)/sky130/versions/$(PDK_VERSION)
 export PDK           ?= sky130A
 export PDK_PATH      ?= $(PDK_ROOT)/$(PDK)
 
-export PATH := /home/shay/a/ece270/bin:$(PATH)
-export LD_LIBRARY_PATH := /home/shay/a/ece270/lib:$(LD_LIBRARY_PATH)
+# export PATH := /home/shay/a/ece270/bin:$(PATH)
+# export LD_LIBRARY_PATH := /home/shay/a/ece270/lib:$(LD_LIBRARY_PATH)
 
 # current project (for development)
 PROJECT = dingle_fadec
