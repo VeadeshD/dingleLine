@@ -83,8 +83,8 @@ module control_laws (
         end
       endcase
 
-    end
-  
-  endmodule
+    end // closes else
+  end // closes always_ff
+endmodule
               
   
