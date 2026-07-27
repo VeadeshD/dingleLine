@@ -16,7 +16,7 @@ module sensor_pipeline (
   //FADEC Outputs
   output logic valid_o,
   output logic [11:0] data_o,
-  output logic valve_pwn_o,
+  output logic valve_pwm_o,
   output logic alarm_o,
   output logic shutdown_flag_o
 );
