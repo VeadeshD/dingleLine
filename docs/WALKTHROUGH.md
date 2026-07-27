@@ -105,6 +105,16 @@ I designed a 3-state Finite State Machine to govern the engine's lifecycle safel
 - **`STEADY_STATE`**: The active flight mode. The module actively compares the incoming telemetry against the critical Redline threshold (`12'd3500`).
 - **`EMERGENCY_SHUTDOWN`**: A terminal safety state. If the telemetry exceeds the Redline, the FSM permanently locks into this state, slams the fuel valves shut, and asserts the `alarm_o` pin. The only way to exit this state is a physical hardware reset.
 
+**Control Laws FSM Diagram:**
+```mermaid
+stateDiagram-v2
+    [*] --> STARTUP : rst_n (Reset)
+    STARTUP --> STEADY_STATE : valid_i == 1
+    STEADY_STATE --> STEADY_STATE : data_i <= 3500\n(PWM Valve Active)
+    STEADY_STATE --> EMERGENCY_SHUTDOWN : data_i > 3500
+    EMERGENCY_SHUTDOWN --> EMERGENCY_SHUTDOWN : Terminal Lock\n(Alarm ON)
+```
+
 ### 2. Hardware PWM (Pulse Width Modulation) Controller
 To proportionally control the analog Xenon gas flow valves using strictly digital (0V or 3.3V) FPGA pins, I engineered a hardware PWM generator.
 - **The Heartbeat**: I built an 8-bit counter (`pwm_counter_q`) that increments by 1 on every single tick of the 12 MHz system clock. It continuously counts from 0 to 255 and overflows back to 0.
