@@ -73,7 +73,7 @@ module sensor_pipeline (
     .shutdown_flag_o  (shutdown_flag_o)
   );    
 
-  uart_tx #(
+  fadec_uart_tx #(
     .CLKS_PER_BIT(104)   
   )
   telemetry_uart (
