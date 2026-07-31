@@ -1,6 +1,6 @@
   
   module uart_tx #(
-    parameter int CLKS_PER_BIT = 104
+    parameter int CLKS_PER_BIT = 104 //change value for needed clock speed
   )(
     input logic clk,
     input logic rst_n,
