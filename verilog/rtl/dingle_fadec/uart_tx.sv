@@ -40,7 +40,23 @@
     end
     always_comb begin
       state_d = state_q;
+      clk_count_d = clk_count_q;
+      bit_index_d = bit_index_q;
+      tx_data_d = tx_data_q;      
+
+      tx_o = 1'b1;
+      tx_done_o = 1'b0;
+      
       case(state_q) 
+        IDLE: begin
+          clk_count_d = 16'd0;
+          bit_index_d = 3'd0;
+
+          if(tx_start_i == 1'b1) begin
+            tx_data_d = tx_data_i;
+            state_d = START_BIT;
+          end
+        end
         START_BIT: begin
           tx_o = 1'b0;
           if(clk_count_q < CLKS_PER_BIT - 1) begin
