@@ -13,7 +13,8 @@ module fpga_top (
   output logic [7:0] txdata,
   input  logic [7:0] rxdata,
   output logic txclk, rxclk,
-  input  logic txready, rxready
+  input  logic txready, rxready,
+  output logic uart_tx_o
 );
   sensor_pipeline my_pipe_inst(
     //inputs
@@ -27,6 +28,7 @@ module fpga_top (
     .valve_pwm_o     (green),  // Connect to the green LED
     .alarm_o         (red),  // Connect to the red LED
     .shutdown_flag_o (blue),  // Connect to the blue LED.
+    .uart_tx_o       (uart_tx_o), // Connect the UART line!
 
     //unused outputs
     .spi_sclk_o      (),
