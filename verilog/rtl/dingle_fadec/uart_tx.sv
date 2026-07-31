@@ -38,6 +38,54 @@
             tx_data_q   <= tx_data_d;
         end
     end
-    always_comb( 
+    always_comb begin
+      state_d = state_q;
+      case(state_q) 
+        START_BIT: begin
+          tx_o = 1'b0;
+          if(clk_count_q < CLKS_PER_BIT - 1) begin
+            clk_count_d = clk_count_q + 1;
+          end else begin
+            clk_count_d = 1'b0;
+            state_d = DATA_BITS;
+          end
+        end
+        DATA_BITS: begin
+          tx_o = tx_data_q[bit_index_q];
+          if(clk_count_q < CLKS_PER_BIT - 1) begin
+            clk_count_d = clk_count_q + 1;
+          end else begin
+            clk_count_d = 1'b0;
+            if(bit_index_q < 7) begin
+              bit_index_d = bit_index_q + 1;
+            end else begin
+              state_d = STOP_BIT;
+            end
+          end
+        end
+        STOP_BIT: begin
+          tx_o = 1'b1;
+          if(clk_count_q < CLKS_PER_BIT - 1) begin
+            clk_count_d = clk_count_q + 1;
+          end else begin        
+            clk_count_d = 1'b0;
+            state_d = CLEANUP;
+          end
+        end
+        CLEANUP: begin
+          tx_done_o = 1'b1;
+          state_d = IDLE;
+        end
+      endcase
+    end
+    
+        
+        
+          
+          
+        
+        
+        
+      
     
     
