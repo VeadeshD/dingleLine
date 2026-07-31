@@ -16,11 +16,38 @@ module fpga_top (
   input  logic txready, rxready,
   output logic uart_tx_o
 );
+
+  logic auto_rst_n;
+  logic auto_start;
+  logic [23:0] timer;
+
+  // Automatically generates a reset pulse when the FPGA powers on
+  reset_on_start rst_inst (
+    .clk(hz100),
+    .reset(auto_rst_n)
+  );
+
+  // Automatically triggers a sensor reading 10 times a second (10Hz)
+  always_ff @(posedge hz100 or negedge auto_rst_n) begin
+    if (!auto_rst_n) begin
+      timer <= 24'd0;
+      auto_start <= 1'b0;
+    end else begin
+      if (timer == 24'd1200000) begin
+        timer <= 24'd0;
+        auto_start <= 1'b1; // Trigger a 1-cycle start pulse
+      end else begin
+        timer <= timer + 1'b1;
+        auto_start <= 1'b0;
+      end
+    end
+  end
+
   sensor_pipeline my_pipe_inst(
     //inputs
     .clk        (hz100),
-    .rst_n      (pb[0]),
-    .start_i    (pb[1]),
+    .rst_n      (auto_rst_n),  // Replaced pb[0]
+    .start_i    (auto_start),  // Replaced pb[1]
     .channel_i  (3'b000),
     .spi_miso_i (1'b0),
 
@@ -38,5 +65,4 @@ module fpga_top (
     .data_o          ()
   );
   
-    
 endmodule
