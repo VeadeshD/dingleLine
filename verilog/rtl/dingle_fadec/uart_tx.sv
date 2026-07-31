@@ -1,5 +1,4 @@
-  
-  module uart_tx #(
+module fadec_uart_tx #(
     parameter int CLKS_PER_BIT = 104 //change value for needed clock speed
   )(
     input logic clk,
@@ -94,5 +93,4 @@
         end
       endcase
     end
-    
 endmodule
