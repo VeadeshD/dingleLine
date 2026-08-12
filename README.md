@@ -11,6 +11,13 @@ The FADEC pipeline currently implements:
 - **Moving Average Filter (`avg_filter.sv`)**: A hardware-accelerated rolling buffer utilizing bit-shift arithmetic to filter electrical noise from the ion thruster in real-time.
 - **Sensor Pipeline (`sensor_pipeline.sv`)**: The top-level integration wrapper.
 
+## Physical Hardware Integration
+The RTL architecture has been successfully synthesized and physically proven on hardware:
+- **Lattice iCE40HX8K FPGA**: Runs the core DSP and FADEC control laws.
+- **MCP3208 12-bit ADC**: Wired via physical SPI pins to convert live analog voltage (simulated engine sensors) into digital telemetry.
+- **Raspberry Pi Pico Ground Station**: Receives continuous UART telemetry packets at 115200 baud. Custom embedded C firmware (`main.c`) utilizes a mathematical synchronization filter to guarantee robust packet alignment and live monitoring.
+- **Physical State Indicators**: The FADEC control states (Fuel Valve PWM, Emergency Alarm, and Engine Shutdown) are physically mapped to external LEDs, instantly visually confirming hardware interrupts and state transitions.
+
 ## Documentation
 - **[Architectural Walkthrough](docs/WALKTHROUGH.md)**: Detailed breakdowns of the RTL design, state machines, and clock domains.
 - **[Development Timeline](docs/TIMELINE.md)**: Current project milestones and roadmap.

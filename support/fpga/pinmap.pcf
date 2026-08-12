@@ -1,33 +1,22 @@
-# ECE270 breakout board pinmap (rev 2)
+# Standard Lattice iCE40HX8K Breakout Board pinmap
 
 set_io --warn-no-port hwclk J3
 
-set_io --warn-no-port pb[20] A11
+# 8 Onboard LEDs
+set_io --warn-no-port onboard_leds[7] B5
+set_io --warn-no-port onboard_leds[6] B4
+set_io --warn-no-port onboard_leds[5] A2
+set_io --warn-no-port onboard_leds[4] A1
+set_io --warn-no-port onboard_leds[3] C5
+set_io --warn-no-port onboard_leds[2] C4
+set_io --warn-no-port onboard_leds[1] B3
+set_io --warn-no-port onboard_leds[0] C3
 
-set_io --warn-no-port pb[19] A10
-set_io --warn-no-port pb[18] C9
-set_io --warn-no-port pb[17] A9
-set_io --warn-no-port pb[16] B9
-
-set_io --warn-no-port pb[15] B8
-set_io --warn-no-port pb[14] A7
-set_io --warn-no-port pb[13] B7
-set_io --warn-no-port pb[12] C7
-
-set_io --warn-no-port pb[11] A6
-set_io --warn-no-port pb[10] C6
-set_io --warn-no-port pb[9] B6
-set_io --warn-no-port pb[8] A5
-
-set_io --warn-no-port pb[7] B5
-set_io --warn-no-port pb[6] B4
-set_io --warn-no-port pb[5] A2
-set_io --warn-no-port pb[4] A1
-
-set_io --warn-no-port pb[3] C5
-set_io --warn-no-port pb[2] C4
-set_io --warn-no-port pb[1] B3
-set_io --warn-no-port pb[0] C3
+# SPI Interface for MCP3208 ADC
+set_io spi_miso A11
+set_io spi_mosi A10
+set_io spi_sclk B9
+set_io spi_cs_n A9
 
 set_io --warn-no-port ss0[0] D2 # A
 set_io --warn-no-port ss0[1] C1 # B
@@ -124,11 +113,9 @@ set_io --warn-no-port green T9
 set_io --warn-no-port blue R9
 
 # Pins for the serial interface.
-# Necessarily using these for ECE 270
-set_io Rx B10
-set_io Tx B12
-#set_io DSRn B14
-#set_io RTSn B13
-set_io DCDn B15
-set_io CTSn A15
-#set_io DTRn A16
+set_io uart_tx_o B12
+
+# External FADEC Simulation LEDs
+set_io ext_alarm_o B15
+set_io ext_shutdown_o A15
+set_io ext_valve_o A16

@@ -121,5 +121,31 @@ To proportionally control the analog Xenon gas flow valves using strictly digita
 - **The Duty Cycle**: During `STEADY_STATE`, a combinational comparator constantly evaluates this counter (`if (pwm_counter_q < 8'd128)`). Because 128 is exactly half of 256, this logic asserts the `valve_pwm_o` pin HIGH for exactly 50% of the cycle, and LOW for the other 50%.
 - **The Result**: The rapid 12 MHz pulsing provides an exact 50% duty cycle, effectively holding the mechanical valve exactly halfway open.
 
-## Next Steps
-Now that both the Sensor Pipeline (Phase 1) and the Control Laws (Phase 2) are complete, the final step is **Top-Level Integration**. The `control_laws.sv` module will be wired inside the `sensor_pipeline.sv` wrapper, connecting the telemetry output of the Moving Average Filter directly into the input of the Control Laws. Finally, a testbench will be written to simulate a catastrophic engine failure and prove the FSM triggers the emergency shutdown.
+# Phase 3 Progress: Physical Hardware Prototyping
+
+## Overview
+The crowning achievement of the FADEC project was migrating the verified RTL architecture out of software simulation and deploying it into the real physical world. We integrated a **Lattice iCE40HX8K FPGA**, a physical **MCP3208 12-bit ADC**, and a **Raspberry Pi Pico Ground Station**.
+
+## Architectural Highlights
+
+### 1. UART Telemetry Pipeline
+To stream live analog data to a computer without an OS, a custom UART transmitter (`fadec_uart_tx.sv`) was engineered.
+- **2-Byte Custom Protocol:** The 12-bit telemetry data is mathematically packed into two 8-bit UART bytes. The High Byte contains a strictly enforced `0000` header to mathematically distinguish it from the Low Byte.
+- **Hardware Trigger:** The `sensor_pipeline.sv` acts as the orchestrator, instantly catching the `valid_o` pulse from the DSP filter and firing the 2 bytes over the Tx pin at 115200 baud.
+
+### 2. Pico Ground Station & Synchronization Filter
+A Raspberry Pi Pico 2 was programmed in bare-metal C to receive the FADEC telemetry.
+- **The Sync Glitch:** When the FPGA powers on, floating pins cause the Pico to read a garbage byte, permanently offsetting the 2-byte packet sequence.
+- **The Mathematical Solution:** A bulletproof synchronization filter was implemented in `main.c`. Because the High Byte's header is `0000`, its decimal value must always be `< 16`. If the Pico reads a High Byte `>= 16`, it instantly throws it away and shifts the sequence by one byte, automatically self-healing the telemetry stream.
+
+### 3. SPI Timing Glitch & FSM Redesign
+During physical integration, the ADC values mysteriously maxed out at `1792`.
+- **The Issue:** The SPI Master was shifting the MOSI data and sampling the MISO data on *both* edges of the SPI clock cycle, mangling the serial data.
+- **The Fix:** The `spi_master.sv` FSM was completely rewritten to strictly adhere to the SPI protocol: it now transmits on the falling edge and samples on the rising edge, perfectly resolving the full 0–4095 range.
+
+### 4. FSM State Simulation (Breadboard)
+The core FSM states were visually mapped to breadboard LEDs:
+- **Valve PWM (Green LED):** Pulses at 12 MHz (50% duty cycle) during `STEADY_STATE`.
+- **Alarm (Red LED) & Shutdown (Yellow LED):** Instantly lock ON when the engine telemetry crosses the `3500` threshold, cutting power to the Green LED and perfectly simulating a catastrophic engine shutdown.
+
+**The Digital FADEC architecture is officially complete and 100% functional!**

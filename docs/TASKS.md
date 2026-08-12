@@ -18,3 +18,9 @@
   - `[x]` Implement the 8-bit PWM Valve Controller
   - `[x]` Integrate `control_laws.sv` into `sensor_pipeline.sv` top-level
   - `[x]` Write `tb_control_laws.sv` and verify the emergency shutdown in EDA Playground
+- `[x]` Phase 3: Physical Hardware Prototyping
+  - `[x]` Develop `fadec_uart_tx.sv` for live telemetry output
+  - `[x]` Synthesize and flash the Lattice iCE40HX8K Breakout Board
+  - `[x]` Write Raspberry Pi Pico Ground Station firmware (`main.c`)
+  - `[x]` Wire physical breadboard (MCP3208 ADC, Potentiometer, LEDs)
+  - `[x]` Resolve SPI timing and UART synchronization hardware bugs

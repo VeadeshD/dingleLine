@@ -2,37 +2,44 @@
 // Empty top module (do not modify the ports)
 
 module fpga_top (
-  // I/O ports
-  input  logic hz100, reset,
-  input  logic [20:0] pb,
-  output logic [7:0] left, right,
-         ss7, ss6, ss5, ss4, ss3, ss2, ss1, ss0,
-  output logic red, green, blue,
+  input  logic hwclk,
+  output logic [7:0] onboard_leds,
+  output logic uart_tx_o,
+  
+  // SPI Interface to MCP3208
+  input  logic spi_miso,
+  output logic spi_mosi,
+  output logic spi_sclk,
+  output logic spi_cs_n,
 
-  // UART ports
-  output logic [7:0] txdata,
-  input  logic [7:0] rxdata,
-  output logic txclk, rxclk,
-  input  logic txready, rxready,
-  output logic uart_tx_o
+  // External FADEC LEDs
+  output logic ext_valve_o,
+  output logic ext_alarm_o,
+  output logic ext_shutdown_o
 );
 
   logic auto_rst_n;
   logic auto_start;
   logic [23:0] timer;
+  logic [23:0] heartbeat_timer;
+  logic heartbeat_led;
 
   // Automatically generates a reset pulse when the FPGA powers on
   reset_on_start rst_inst (
-    .clk(hz100),
+    .clk(hwclk),
     .reset(auto_rst_n)
   );
 
   // Automatically triggers a sensor reading 10 times a second (10Hz)
-  always_ff @(posedge hz100 or negedge auto_rst_n) begin
+  // And flashes a heartbeat LED every second
+  always_ff @(posedge hwclk or negedge auto_rst_n) begin
     if (!auto_rst_n) begin
       timer <= 24'd0;
       auto_start <= 1'b0;
+      heartbeat_timer <= 24'd0;
+      heartbeat_led <= 1'b0;
     end else begin
+      // 10Hz Trigger
       if (timer == 24'd1200000) begin
         timer <= 24'd0;
         auto_start <= 1'b1; // Trigger a 1-cycle start pulse
@@ -40,29 +47,51 @@ module fpga_top (
         timer <= timer + 1'b1;
         auto_start <= 1'b0;
       end
+      
+      // 1Hz Heartbeat LED
+      if (heartbeat_timer == 24'd6000000) begin
+        heartbeat_timer <= 24'd0;
+        heartbeat_led <= ~heartbeat_led;
+      end else begin
+        heartbeat_timer <= heartbeat_timer + 1'b1;
+      end
     end
   end
 
   sensor_pipeline my_pipe_inst(
     //inputs
-    .clk        (hz100),
-    .rst_n      (auto_rst_n),  // Replaced pb[0]
-    .start_i    (auto_start),  // Replaced pb[1]
+    .clk        (hwclk),
+    .rst_n      (auto_rst_n),
+    .start_i    (auto_start),
     .channel_i  (3'b000),
-    .spi_miso_i (1'b0),
+    .spi_miso_i (spi_miso),  // Now connected to physical pin!
 
     //outputs
-    .valve_pwm_o     (green),  // Connect to the green LED
-    .alarm_o         (red),  // Connect to the red LED
-    .shutdown_flag_o (blue),  // Connect to the blue LED.
-    .uart_tx_o       (uart_tx_o), // Connect the UART line!
+    .valve_pwm_o     (ext_valve_o),
+    .alarm_o         (ext_alarm_o),
+    .shutdown_flag_o (ext_shutdown_o),
+    .uart_tx_o       (uart_tx_o),
 
-    //unused outputs
-    .spi_sclk_o      (),
-    .spi_cs_n_o      (),
-    .spi_mosi_o      (),
+    // SPI outputs
+    .spi_sclk_o      (spi_sclk),
+    .spi_cs_n_o      (spi_cs_n),
+    .spi_mosi_o      (spi_mosi),
     .valid_o         (),
     .data_o          ()
   );
   
+  // Assign heartbeat to all 8 onboard LEDs!
+  assign onboard_leds = {8{heartbeat_led}};
+  
+endmodule
+
+module reset_on_start (
+  input  logic clk,
+  output logic reset
+);
+  logic [3:0] reset_cnt = 0;
+  always_ff @(posedge clk) begin
+    if (reset_cnt != 4'hf) reset_cnt <= reset_cnt + 1;
+  end
+  assign reset = (reset_cnt == 4'hf);
 endmodule

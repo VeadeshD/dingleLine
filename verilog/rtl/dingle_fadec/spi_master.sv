@@ -86,43 +86,45 @@
                             bit_counter_d = 5'b0;
                             
                             // MCP3208 Command: Start bit (1), Single-ended (1), plus the 3-bit channel
-                            // We load it into the top of our shift register
                             shift_reg_d = {2'b11, channel_i, 7'b0}; 
                         end    
                 end
 
                 SEND_CMD: begin
-                        spi_cs_n_o = 1'b0;   //wake up the machine
-                        spi_mosi_o = shift_reg_q[11];  //output top bit of shift register to ADC
+                        spi_cs_n_o = 1'b0;
+                        spi_mosi_o = shift_reg_q[11]; // Output MOSI
  
-                        if(clk_div_q == 4'd5) begin
-                                shift_reg_d = {shift_reg_q[10:0], 1'b0};  //shift register left by 1                                
+                        // Shift MOSI on the FALLING edge of the SPI clock
+                        if(clk_div_q == 4'd5 && spi_clk_q == 1'b1) begin
+                                shift_reg_d = {shift_reg_q[10:0], 1'b0};                                
                                 if (bit_counter_q == 5'd4) begin
                                         state_d = SAMPLE;
-                                        bit_counter_d = 5'b0; //reset for reading phase
+                                        bit_counter_d = 5'b0;
                                 end else begin
                                         bit_counter_d = bit_counter_q + 1'b1;
                                 end
                         end
                 end
 
-
                 SAMPLE: begin
                         spi_cs_n_o = 1'b0; // Keep ADC awake
-                        // The ADC needs 1 or 2 clock cycles to physically sample the voltage.
-                        // We just wait here for 1 cycle and then move to reading.
-                        state_d = READ_DATA;
-                        bit_counter_d = 5'b0;
+                        // Wait for one more FALLING edge (Clock 6) for the ADC to output the NULL bit
+                        if(clk_div_q == 4'd5 && spi_clk_q == 1'b1) begin
+                                state_d = READ_DATA;
+                                bit_counter_d = 5'b0;
+                        end
                 end
 
                 READ_DATA: begin
-                        spi_cs_n_o = 1'b0;  //keep ADC awake
-                        //reads incoming bit from ADC and shifts into botom register
-
-                        //count for 12 bits
-                        if(clk_div_q == 4'd5) begin
+                        spi_cs_n_o = 1'b0;
+                        
+                        // Sample MISO on the RISING edge of the SPI clock
+                        if(clk_div_q == 4'd5 && spi_clk_q == 1'b0) begin
                                 shift_reg_d = {shift_reg_q[10:0], spi_miso_i};
-                                if (bit_counter_q == 5'd11) begin
+                                
+                                // We read 13 bits (1 NULL bit + 12 Data bits)
+                                // The NULL bit will simply fall off the top of the 12-bit shift register!
+                                if (bit_counter_q == 5'd12) begin
                                         state_d = DONE;
                                 end else begin
                                         bit_counter_d = bit_counter_q + 1'b1;
@@ -131,7 +133,7 @@
                 end
 
                 DONE: begin
-                        spi_cs_n_o = 1'b1;        //pull high to turn of ADC 
+                        spi_cs_n_o = 1'b1;        //pull high to turn off ADC 
                         valid_o = 1'b1;           //Tell FGPA new reading
                         data_o = shift_reg_q;     //output matched 12 bit number
 

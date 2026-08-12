@@ -19,9 +19,18 @@ This document outlines the high-level timeline and milestones for the design, ve
 - [x] Design PWM (Pulse Width Modulation) generation for valve control
 - [x] Verify Control Laws via simulation
 
-## Milestone 3: Open-Source Silicon Integration
+## Milestone 3: Physical Hardware Prototyping
+**Status:** Completed
+**Goal:** Deploy the verified RTL to a physical FPGA to prove the FADEC logic in the real world with real analog sensors.
+- [x] Synthesize and flash bitstream to Lattice iCE40HX8K Breakout Board
+- [x] Implement hardware UART transmitter for live ground station telemetry
+- [x] Write embedded C firmware for the Raspberry Pi Pico 2 Ground Station
+- [x] Integrate physical MCP3208 ADC, potentiometer, and status LEDs via breadboard
+- [x] Debug and mathematically resolve hardware SPI timing and UART synchronization glitches
+
+## Milestone 4: Open-Source Silicon Integration
 **Status:** Pending
-**Goal:** Prepare verified FADEC RTL for physical tapeout via the OpenLane/Sky130 flow.
+**Goal:** Prepare verified FADEC RTL for physical tapeout via the Efabless OpenLane/Sky130 flow.
 - [ ] Synthesize RTL for Sky130 PDK
 - [ ] Complete floorplanning and routing
 - [ ] Finalize `info.md` tapeout datasheet
